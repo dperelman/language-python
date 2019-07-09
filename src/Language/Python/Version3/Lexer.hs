@@ -20,6 +20,8 @@ module Language.Python.Version3.Lexer (
    initLexState ) where
 
 import Prelude hiding (lex)
+import Control.Monad (liftM)
+import Control.Monad.Trans.Except
 import Language.Python.Version3.Parser.Lexer (lexToken, initStartCodeStack)
 import Language.Python.Common.Token as Token 
 import Language.Python.Common.SrcLocation (initialSrcLocation)
@@ -33,7 +35,7 @@ initLexState input srcName =
 -- | Parse a string into a list of Python Tokens, or return an error. 
 lex :: String -- ^ The input stream (python source code). 
     -> String -- ^ The name of the python source (filename or input device).
-    -> Either ParseError [Token] -- ^ An error or a list of tokens.
+    -> Except ParseError [Token] -- ^ An error or a list of tokens.
 lex input srcName =
    execParser lexer $ initLexState input srcName
 
@@ -41,13 +43,12 @@ lex input srcName =
 -- or a pair containing the next token and the rest of the input after the token.
 lexOneToken :: String -- ^ The input stream (python source code).
          -> String -- ^ The name of the python source (filename or input device).
-         -> Either ParseError (Token, String) -- ^ An error or the next token and the rest of the input after the token. 
+         -> Except ParseError (Token, String) -- ^ An error or the next token and the rest of the input after the token. 
 lexOneToken source srcName =
-   case runParser lexToken state of
-      Left err -> Left err
-      Right (tok, state) -> Right (tok, input state)
+   liftM stateToInput $ runParser lexToken state
    where
    state = initLexState source srcName 
+   stateToInput (tok, state) = (tok, input state)
 
 -- | Lex a sequence of tokens.
 lexer :: P [Token]

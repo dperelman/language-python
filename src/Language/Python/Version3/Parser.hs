@@ -30,6 +30,7 @@ module Language.Python.Version3.Parser (
    -- * Parsing expressions
    parseExpr) where
 
+import Control.Monad.Trans.Except
 import Language.Python.Version3.Parser.Parser (parseFileInput, parseSingleInput, parseEval)
 import Language.Python.Version3.Parser.Lexer (initStartCodeStack)
 import Language.Python.Common.AST (ModuleSpan, StatementSpan, ExprSpan)
@@ -40,7 +41,7 @@ import Language.Python.Common.ParserMonad (execParserKeepComments, ParseError, i
 -- | Parse a whole Python source file. Return comments in addition to the parsed module.
 parseModule :: String -- ^ The input stream (python module source code). 
       -> String -- ^ The name of the python source (filename or input device). 
-      -> Either ParseError (ModuleSpan, [Token]) -- ^ An error or the abstract syntax tree (AST) of the python module and comment tokens.
+      -> Except ParseError (ModuleSpan, [Token]) -- ^ An error or the abstract syntax tree (AST) of the python module and comment tokens.
 parseModule input srcName = 
    execParserKeepComments parseFileInput state 
    where
@@ -50,7 +51,7 @@ parseModule input srcName =
 -- | Parse one compound statement, or a sequence of simple statements. Generally used for interactive input, such as from the command line of an interpreter. Return comments in addition to the parsed statements.
 parseStmt :: String -- ^ The input stream (python statement source code). 
       -> String -- ^ The name of the python source (filename or input device). 
-      -> Either ParseError ([StatementSpan], [Token]) -- ^ An error or maybe the abstract syntax tree (AST) of zero or more python statements, plus comments.
+      -> Except ParseError ([StatementSpan], [Token]) -- ^ An error or maybe the abstract syntax tree (AST) of zero or more python statements, plus comments.
 parseStmt input srcName = 
    execParserKeepComments parseSingleInput state 
    where
@@ -60,7 +61,7 @@ parseStmt input srcName =
 -- | Parse an expression. Generally used as input for the \'eval\' primitive. Return comments in addition to the parsed expression.
 parseExpr :: String -- ^ The input stream (python statement source code). 
       -> String -- ^ The name of the python source (filename or input device). 
-      -> Either ParseError (ExprSpan, [Token]) -- ^ An error or maybe the abstract syntax tree (AST) of the python expression, plus comment tokens.
+      -> Except ParseError (ExprSpan, [Token]) -- ^ An error or maybe the abstract syntax tree (AST) of the python expression, plus comment tokens.
 parseExpr input srcName = 
    execParserKeepComments parseEval state 
    where

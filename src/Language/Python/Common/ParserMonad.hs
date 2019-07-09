@@ -52,6 +52,7 @@ import Language.Python.Common.ParseError (ParseError (..))
 import Control.Applicative ((<$>))
 import Control.Monad.State.Class
 import Control.Monad.State.Strict as State
+import Control.Monad.Trans.Except
 import Language.Python.Common.Pretty
 
 internalError :: String -> P a 
@@ -89,19 +90,19 @@ initialState initLoc inp scStack
    , comments = []
    }
 
-type P a = StateT ParseState (Either ParseError) a
+type P a = StateT ParseState (Except ParseError) a
 
 throwError :: ParseError -> P a
-throwError = lift . Left
+throwError = lift . throwE
 
-execParser :: P a -> ParseState -> Either ParseError a
+execParser :: P a -> ParseState -> Except ParseError a
 execParser = evalStateT 
 
-execParserKeepComments :: P a -> ParseState -> Either ParseError (a, [Token])
+execParserKeepComments :: P a -> ParseState -> Except ParseError (a, [Token])
 execParserKeepComments parser state = 
    evalStateT (parser >>= \x -> getComments >>= \c -> return (x, c)) state
 
-runParser :: P a -> ParseState -> Either ParseError (a, ParseState)
+runParser :: P a -> ParseState -> Except ParseError (a, ParseState)
 runParser = runStateT 
 
 {-# INLINE returnP #-}
